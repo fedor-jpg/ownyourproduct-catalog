@@ -1,0 +1,28 @@
+{
+  "id": "ownyourproduct-salon",
+  "name": "OwnYourProduct Salon",
+  "tagline": "A beauty salon's whole product under your own name: calendar, clients, reports, Instagram answered with your prices.",
+  "description": "The salon product's own front on the Chatfuel engine: calendar and booking window, clients, services and staff levels, reports and expenses, five-step set-up, Instagram comments answered with your prices. Spanish, Portuguese, English. Source in your repository.",
+  "category": "instagram",
+  "status": "draft",
+  "modules": ["auth", "admin"],
+  "npmDependencies": {
+    "heic-to": "^1.5.2",
+    "papaparse": "^5.7.0",
+    "@types/papaparse": "^5.5.2",
+    "libphonenumber-js": "^1.13.13"
+  },
+  "brand": { "appName": "OwnYourProduct Salon", "logo": "listing/icon.png" },
+  "listing": {
+    "icon": "listing/icon.png",
+    "screenshots": [
+      { "file": "listing/screenshots/01-calendar.png", "alt": "The salon calendar, week view, with the product's own header and the Calendar · Instagram · Ads switcher" },
+      { "file": "listing/screenshots/02-booking-saved.png", "alt": "An appointment booked from the booking window: saved and confirmed in the calendar" }
+    ],
+    "keywords": ["salon", "beauty", "calendar", "bookings", "instagram", "reports", "spanish", "latam"],
+    "provides": [
+      { "name": "Calendar", "description": "Week and day agenda, booking window, clients, services and staff, synced with Chatfuel bookings." },
+      { "name": "Instagram", "description": "Comment Studio, inbox and assistant for the salon's Instagram account." }
+    ]
+  }
+}
