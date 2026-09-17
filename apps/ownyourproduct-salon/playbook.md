@@ -131,8 +131,10 @@ prints `401`, not `404`.
 
 ## 5. Choose the surfaces
 
-In `.env` set `VITE_SKU=agenda+ig` (calendar and Instagram). `VITE_SKU=agenda` is the
-calendar alone. Restart `npm run dev` after changing `.env`.
+The owner's message says which modules they chose, as a line `VITE_SKU=…`:
+`agenda` is the calendar alone, `agenda+ig` the calendar and Instagram. Set that value in
+`.env` as `VITE_SKU=…`. If the message has no such line, use `agenda+ig`. Restart
+`npm run dev` after changing `.env`.
 
 Check: `grep -c '^VITE_SKU=' .env` prints `1`. The switcher itself is checked in step 7,
 once somebody is signed in.
@@ -162,8 +164,9 @@ Check, in this order:
 2. The booking window (`+`) books an appointment for a new client and says
    "It's in your calendar"; the booking is in the Chatfuel dashboard for this bot.
 3. Settings → reports PIN: set one, then Reports asks for it and accepts it.
-4. The header shows the switcher (Agenda · Instagram in Spanish and Portuguese, Calendar ·
-   Instagram in English); Instagram → connect opens a `panel.chatfuel.com` link.
+4. With `agenda+ig`, the header shows the switcher (Agenda · Instagram in Spanish and
+   Portuguese, Calendar · Instagram in English) and Instagram → connect opens a
+   `panel.chatfuel.com` link. With `agenda`, there is no switcher and no Instagram tab.
 5. `/team` opens the shell's Team page, and the product's sign-out button signs out of the
    app (the next load shows the sign-in).
 
