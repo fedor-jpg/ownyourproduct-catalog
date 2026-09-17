@@ -13,7 +13,8 @@ owner or say the app is ready. Until step 4 is done the app is the bare shell.
 Rules while you work:
 
 - The product front lives in `src/oyp/`. Do not edit it unless the owner asks for a
-  product change; everything below is wiring around it.
+  product change; everything below is wiring around it, except step 6, which puts the
+  owner's name and colours on it.
 - Every step ends with a check. Do not start the next step until the check passes.
 - Never print keys or tokens from `.env`.
 
@@ -132,14 +133,76 @@ prints `401`, not `404`.
 ## 5. Choose the surfaces
 
 The owner's message says which modules they chose, as a line `VITE_SKU=…`:
-`agenda` is the calendar alone, `agenda+ig` the calendar and Instagram. Set that value in
-`.env` as `VITE_SKU=…`. If the message has no such line, use `agenda+ig`. Restart
-`npm run dev` after changing `.env`.
+`agenda` is the calendar alone, `agenda+ig` the calendar and Instagram, `agenda+ads` the
+calendar and Anuncios, `agenda+ig+ads` all three. Set that value in `.env` as `VITE_SKU=…`.
+If the message has no such line, use `agenda+ig`. Restart `npm run dev` after changing `.env`.
 
-Check: `grep -c '^VITE_SKU=' .env` prints `1`. The switcher itself is checked in step 7,
+Anuncios (`+ads`) is Sasha's ads module. Its screens work in this package, but connecting a
+Meta ad account needs server routes the package does not have yet: tell the owner so when
+the value includes `ads`, and do not try to build those routes in this plan.
+
+Check: `grep -c '^VITE_SKU=' .env` prints `1`. The switcher itself is checked in step 8,
 once somebody is signed in.
 
-## 6. Create the product's tables
+## 6. Put the owner's brand on it
+
+The owner's message carries the product's name, colours and language as three lines,
+`BRAND_NAME=…`, `BRAND_COLORS=…` and `LANGUAGE=…`. Apply the parts that are there; a
+message with none of them leaves the product with its own name, colours and languages.
+
+**Name.** In `src/oyp/App.tsx`, `Logo()` draws the wordmark as two spans and a heart badge.
+Put every word of the name except the last into `.a` and the last word into `.b`; a
+one-word name goes whole into `.a` and `.b` stays empty. Replace `<Heart />` inside
+`.brand-badge` with the name's first letter, upper case, as
+`<span style={{ fontWeight: 800, fontSize: 15, lineHeight: 1 }}>`. Then replace the product's old
+name, `Agenda Conmigo` and `AgendaConmigo`, wherever a person reads it under `src/oyp/`:
+the sign-in texts in `screens/Login.tsx`, `screens/Preparar.tsx`, `screens/ig/onboarding.tsx`,
+the three `bookingAppears` texts in `screens/ig/copy.ts`, `KEYWORD_RULE_NAME` in
+`screens/ig/modes.ts` (the rule name the salon sees in Chatfuel), and the display-name
+fallbacks in `App.tsx`, `auth/auth-context.tsx` and `auth/browser-config.ts`. Leave comments
+and `.graphql` files as they are.
+
+**Colours.** `BRAND_COLORS` is fourteen six-digit hex values joined by dots, in this order:
+`--purple`, `--purple-600`, `--purple-soft`, `--purple-softer`, `--ink`, `--coral`,
+`--coral-600`, `--muted`, `--faint`, `--line`, `--line-2`, `--bg`, then the gradient's start
+and end. The values carry no `#`: add it. In the first `:root` block of
+`src/oyp/styles.css`, set those twelve variables, for example `--purple: #2855d9;`;
+set `--grad` to `linear-gradient(90deg, #<start> 0%, #<end> 100%)` and `--grad-soft` to the
+same two colours at 10% opacity; and write `--shadow-sm` and `--shadow` with the `--ink`
+colour in their `rgba()` instead of the purple they carry now. The `.brand-badge` rule in
+the same file has a purple glow, `rgba(142,60,218,.35)`: give it the `--purple` colour at the
+same opacity. Leave the `:root.theme-*`
+blocks alone: they are the palettes a salon can pick in Settings. In `src/oyp/ui/theme.ts`
+the default palette's label says "(Morado)"; remove that word, since the default is no
+longer purple.
+
+The screens' own stylesheets also write the old palette out as literals. Under `src/oyp/`
+(`.css` and `.ts`/`.tsx` files alike), outside the `:root.theme-*` blocks, replace, keeping
+each alpha value:
+
+- `rgba(142,60,218,…)` with the `--purple` colour as `rgba(r,g,b,…)`;
+- `rgba(70,29,109,…)` with the `--ink` colour;
+- `rgba(248,116,125,…)` and `rgba(244,102,124,…)` with the `--coral` colour;
+- the fallbacks `#8e3cda`, `#f4ecfb`, `#faf7fd` and `#ece6f6` with the `--purple`,
+  `--purple-soft`, `--purple-softer` and `--line` values.
+
+Leave the colour lists in `data/seed.ts` and `screens/ig/onboarding.tsx`: those are colours
+a salon gives its services and labels, not the brand.
+
+**Language.** `LANGUAGE=es` and `LANGUAGE=en` need no change: both are released, and each
+salon gets its language from its country, its browser or Settings. For `LANGUAGE=pt`, set
+`ready: true` for `pt` in `APP_LANGUAGES` in `src/oyp/core/language.ts`, and tell the owner
+that Portuguese is partly translated, so some screens, Anuncios among them, stay in Spanish.
+The constructor's preview showed the same.
+
+This is the same name and palette the owner saw in the constructor's preview.
+
+Check: `grep -rn "Agenda Conmigo\|AgendaConmigo" src/oyp --include='*.ts' --include='*.tsx'`
+prints only comment lines; in `src/oyp/styles.css` the first `--purple:` is `#` plus the first
+value of `BRAND_COLORS`; `grep -rnE "142, ?60, ?218|70, ?29, ?109|248, ?116, ?125" src/oyp`
+prints nothing outside the `:root.theme-*` blocks; `npm run check` passes.
+
+## 7. Create the product's tables
 
 Apply, in name order, after the wizard's own `supabase/migrations` (the wizard applied those
 when it set the project up): `supabase/app-migrations/0019_staff_access.sql`, then
@@ -153,26 +216,28 @@ project already has it: check with the queries below and move on.
 Check, in the SQL editor: `select to_regclass('public.cf_agenda_records')` is not null, and
 `select count(*) from pg_proc where proname like 'cf_oyp_%'` returns 7.
 
-## 7. Walk it as the owner
+## 8. Walk it as the owner
 
 With `npm run dev` running: sign up with a fresh e-mail on `http://localhost:5173/`. The
 wizard's sign-up creates the owner's workspace and bot; the app opens on the product.
 
 Check, in this order:
 
-1. Set-up (five steps) publishes the salon; the calendar opens.
+1. The header shows the owner's product name and colours from step 6, not "Agenda Conmigo"
+   and purple. Set-up (five steps) publishes the salon; the calendar opens.
 2. The booking window (`+`) books an appointment for a new client and says
    "It's in your calendar"; the booking is in the Chatfuel dashboard for this bot.
 3. Settings → reports PIN: set one, then Reports asks for it and accepts it.
 4. With `agenda+ig`, the header shows the switcher (Agenda · Instagram in Spanish and
    Portuguese, Calendar · Instagram in English) and Instagram → connect opens a
-   `panel.chatfuel.com` link. With `agenda`, there is no switcher and no Instagram tab.
+   `panel.chatfuel.com` link. With `+ads`, the switcher also shows Anuncios (Ads in
+   English) and its panel opens. With `agenda`, there is no switcher and no Instagram tab.
 5. `/team` opens the shell's Team page, and the product's sign-out button signs out of the
    app (the next load shows the sign-in).
 
-## 8. Put it online
+## 9. Put it online
 
-The wizard does not deploy. `npm run deploy` puts the app on Vercel through the Vercel
+Only when the owner says so. The wizard does not deploy. `npm run deploy` puts the app on Vercel through the Vercel
 CLI (a Vercel login is asked once). Then in Supabase, Authentication → URL configuration,
 add the production origin to the redirect allowlist. If the Vercel team has Deployment
 Protection on, turn it off for this project, or the salon's staff meet a Vercel login.
@@ -181,7 +246,8 @@ Check: the production URL opens the sign-in; signing in lands on the product.
 
 ## Out of scope
 
-- Ads (`VITE_SKU` with `+ads`): needs the Meta OAuth server routes, not in this package.
+- Connecting a Meta ad account in Anuncios: needs the Meta OAuth server routes, not in this
+  package. The Anuncios screens themselves are in (step 5).
 - WhatsApp reminders (subflow): need a server-held key; Settings says they are not
   available in this installation.
 - The product's operator panel: the wizard's `admin` module is the operator panel here.
